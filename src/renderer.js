@@ -17,25 +17,75 @@ class FileExplorerUI {
         this.fileExplorer = new FileExplorer();
         this.pathHistory = []; // Track navigation history
         this.toolbar = document.getElementById('toolbar');
+        this.currentDirectory = 'C:/'
 
 
         this.filteredFileExtensions = ['.sys','.dll','.tmp'];
     }
 
     createFilteredFileList(){
-        const extensionToRemove = extensionButton.innerText;
-        this.filteredFileExtensions.forEach((ext, index) => {
-            if(ext === extensionToRemove) {
-                this.filteredFileExtensions.splice(index, 1);
-            }
-        });
+    const filteredFileList = document.getElementById('filteredFileList');
+
+
+    if(filteredFileList.hasChildNodes()){
+        filteredFileList.innerHTML = ''// Removes children
     }
-    
+
+        this.filteredFileExtensions.forEach(ext => {
+            const extensionButton  = document.createElement('button');
+            extensionButton.innerText = ext+'  ';
+            extensionButton.onclick= () => this.removeFilteredFileExtension(extensionButton)
+            filteredFileList.appendChild(extensionButton);
+        })
+
+        const addExtensionButton = document.createElement('button');
+        addExtensionButton.innerText = '+';
+        addExtensionButton.onclick = () => this.addFilteredFileExtension(addExtensionButton, filteredFileList);
+        filteredFileList.appendChild(addExtensionButton);
+    }
+ 
+    addFilteredFileExtension(addExtensionButton, filteredFileList){
+        // Create text box for user to type their extension
+        const inputBox = document.createElement('input');
+        filteredFileList.appendChild(inputBox)
+        // The addExtensionButton will now get the text from the text box and create new extension button
+        addExtensionButton.onclick = () => this.getFileExtensionText(addExtensionButton,inputBox);
+       
+    }
+
+    getFileExtensionText(addExtensionButton,inputBox){
+        const newExtension = inputBox.value.trim();
+
+         // Prevents duplicated
+         if(this.filteredFileExtensions.includes(newExtension)){
+            // File extension already in list return
+            console.log('File extension already being filtered');
+            return;
+        }
+
+        if (!newExtension.startsWith('.')) {
+            console.log('Extension must start with a dot');
+            return;
+        }
+        this.filteredFileExtensions.push(newExtension);
+        inputBox.remove();
+
+        //Resets addExtensionBUtton function so it performs original action
+        addExtensionButton.onclick = () => this.addFilteredFileExtension(addExtensionButton);
+
+        this.createFilteredFileList();
+        // Now re build file list without new filtered files
+        this.displayDirectory(this.currentDirectory);
+    }
+
     removeFilteredFileExtension(extensionButton) {
         const extensionToRemove = extensionButton.innerText;
-        // We use filter approach as opposed to remoaval druing iteration as its safer.
+        // We use filter approach as opposed to remoaval druing iteration as its sager
         this.filteredFileExtensions = this.filteredFileExtensions.filter(ext => ext !== extensionToRemove);
+        this.createFilteredFileList();
+        this.displayDirectory(this.currentDirectory);
     }
+
     getParentDirectory(directory){
          // Remove trailing slash if it exists
          const cleanPath = directory.endsWith('/') ? directory.slice(0, -1) : directory;
@@ -44,6 +94,9 @@ class FileExplorerUI {
          return parentPath ? parentPath + '/' : null;
     }
     
+
+
+
     updateBackButton(currentPath){
         console.log('updating back button')
         let backButton = document.getElementById('backButton');
@@ -75,7 +128,7 @@ class FileExplorerUI {
    displayDirectory(directory) {
         console.log('Displaying directory:', directory);
         this.updateBackButton(directory);
-        
+        this.currentDirectory = directory;
         // Calls the actual c++ function which returns the list of files
         const files = this.fileExplorer.listDirectory(directory);
         this.container.innerHTML = '';
