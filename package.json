@@ -1,23 +1,26 @@
 {
-  "name": "customfileexplorer",
+  "name": "custom-file-explorer",
   "version": "1.0.0",
-  "description": "",
   "main": "src/index.js",
   "scripts": {
     "start": "electron .",
-    "rebuild": "node-gyp rebuild && electron-rebuild"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@electron-forge/cli": "^7.6.0",
-    "@electron/rebuild": "^3.7.1",
-    "electron": "^34.0.0",
-    "electron-rebuild": "^3.2.9",
-    "node-addon-api": "^8.3.0"
+    "build": "webpack",
+    "watch": "webpack --watch",
+    "dev": "concurrently \"npm run watch\" \"npm run start\""
   },
   "dependencies": {
-    "bindings": "^1.5.0"
+    "electron": "^28.1.0",
+    "node-fetch": "^2.6.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.5",
+    "@babel/preset-env": "^7.22.5",
+    "@babel/preset-react": "^7.22.5",
+    "babel-loader": "^9.1.2",
+    "webpack": "^5.85.0",
+    "webpack-cli": "^5.1.1",
+    "concurrently": "^8.0.1"
   }
 }

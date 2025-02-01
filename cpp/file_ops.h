@@ -1,14 +1,22 @@
-#pragma once
-#include <napi.h>
-#include <string>
-#include <vector>
+// #pragma once
+// #include <napi.h>
+// #include <string>
+// #include <vector>
 
-class FileOps : public Napi::ObjectWrap<FileOps> {
- public:
-  static Napi::Object Init(Napi::Env env, Napi::Object exports);
-  FileOps(const Napi::CallbackInfo& info);
+// // Define the struct before the class
+// struct FileInfo {
+//     std::string name;
+//     bool isDirectory;
+//     std::vector<FileInfo> children;
+// };
 
- private:
-  Napi::Value ListDirectory(const Napi::CallbackInfo& info);
-  std::vector<std::string> GetDirectoryContents(const std::string& path);
-};
+// class FileOps : public Napi::ObjectWrap<FileOps> {
+//  public:
+//     static Napi::Object Init(Napi::Env env, Napi::Object exports);
+//     FileOps(const Napi::CallbackInfo& info);
+
+//  private:
+//     Napi::Value ListDirectory(const Napi::CallbackInfo& info);
+//     // Update the function signature to match the cpp file
+//     std::vector<FileInfo> GetDirectoryContents(const std::string& path, int depth = 1);
+// };
