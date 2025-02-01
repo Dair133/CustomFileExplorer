@@ -26,6 +26,7 @@ class ExplorerMonitor:
         self.shell = win32com.client.Dispatch("Shell.Application")
 
     def get_files_in_folder(self, folder) -> List[Dict]:
+        print("Getting files inside folder")
         """Get list of files in the folder"""
         try:
             files = []
@@ -34,7 +35,7 @@ class ExplorerMonitor:
                     files.append({
                         "name": item.Name,
                         "type": item.Type,
-                        "is_folder": item.IsFolder,
+                        "isFolder": item.IsFolder,
                         "size": item.Size if not item.IsFolder else None
                     })
                 except Exception as e:
