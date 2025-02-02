@@ -1,4 +1,5 @@
 // main.js
+// A Main Process script that uses IPC to communicate with the Renderer Process
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fetch = require('node-fetch');  // You'll need to npm install node-fetch

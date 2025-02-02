@@ -26,22 +26,26 @@ class ExplorerMonitor:
         self.shell = win32com.client.Dispatch("Shell.Application")
 
     def get_files_in_folder(self, folder) -> List[Dict]:
-        print("Getting files inside folder")
-        """Get list of files in the folder"""
+        """Get list of all files and subfolders in the folder"""
         try:
-            files = []
+            items = []
             for item in folder.Items():
                 try:
-                    files.append({
+                    item_info = {
                         "name": item.Name,
                         "type": item.Type,
                         "isFolder": item.IsFolder,
-                        "size": item.Size if not item.IsFolder else None
-                    })
+                        "size": item.Size
+                    }
+                    if item.IsFolder:
+                        # Recursively get files and subfolders in subfolders
+                        subfolder = item.GetFolder
+                        item_info["subfolder"] = self.get_files_in_folder(subfolder)
+                    items.append(item_info)
                 except Exception as e:
                     logger.debug(f"Error processing item: {e}")
                     continue
-            return files
+            return items
         except Exception as e:
             logger.debug(f"Error listing files: {e}")
             return []
