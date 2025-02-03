@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import win32com.client
@@ -5,7 +6,7 @@ import win32gui
 import asyncio
 from typing import List, Dict
 import logging
-import os
+import pythoncom
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -23,10 +24,13 @@ app.add_middleware(
 
 class ExplorerMonitor:
     def __init__(self):
-        self.shell = win32com.client.Dispatch("Shell.Application")
+        pass
 
-    def get_files_in_folder(self, folder) -> List[Dict]:
-        """Get list of all files and subfolders in the folder"""
+    def get_files_in_folder(self, folder, depth=0) -> List[Dict]:
+        """Recursively get a list of files and subfolders from the given folder, up to a depth of 5."""
+        if depth > 3:
+            return []
+
         try:
             items = []
             for item in folder.Items():
@@ -38,9 +42,12 @@ class ExplorerMonitor:
                         "size": item.Size
                     }
                     if item.IsFolder:
-                        # Recursively get files and subfolders in subfolders
-                        subfolder = item.GetFolder
-                        item_info["subfolder"] = self.get_files_in_folder(subfolder)
+                        try:
+                            subfolder = item.GetFolder()
+                            if subfolder:
+                                item_info["subfolder"] = self.get_files_in_folder(subfolder, depth + 1)
+                        except Exception as ex:
+                            logger.debug(f"Error retrieving subfolder for {item.Name}: {ex}")
                     items.append(item_info)
                 except Exception as e:
                     logger.debug(f"Error processing item: {e}")
@@ -51,18 +58,15 @@ class ExplorerMonitor:
             return []
 
     def get_window_info(self, window) -> Dict:
-        """Safely extract window information"""
+        """Extract information from a single Explorer window."""
         try:
-            # Check if it's actually a File Explorer window
             if not hasattr(window, 'Name') or window.Name != "File Explorer":
                 return None
 
-            # Get window handle
             hwnd = getattr(window, 'HWND', None)
             if not hwnd:
                 return None
 
-            # Safely get document and folder
             try:
                 document = window.Document
                 if not document:
@@ -73,15 +77,10 @@ class ExplorerMonitor:
                     return None
 
                 path = folder.Self.Path if folder.Self else None
-                # Get title from either Document or the window title
                 title = getattr(document, 'Title', None)
                 if not title:
-                    # Fallback to getting window title directly
                     title = win32gui.GetWindowText(hwnd)
-
-                # Get files in the folder
                 files = self.get_files_in_folder(folder)
-
             except Exception as e:
                 logger.debug(f"Error getting window details: {e}")
                 return None
@@ -98,17 +97,21 @@ class ExplorerMonitor:
             return None
 
     def get_explorer_paths(self) -> List[Dict]:
-        explorer_windows = []
+        pythoncom.CoInitializeEx(pythoncom.COINIT_APARTMENTTHREADED)
         try:
-            windows = self.shell.Windows()
-            for window in windows:
-                window_info = self.get_window_info(window)
-                if window_info:
-                    explorer_windows.append(window_info)
-        except Exception as e:
-            logger.error(f"Error getting Explorer windows: {e}")
-        
-        return explorer_windows
+            shell = win32com.client.Dispatch("Shell.Application")
+            explorer_windows = []
+            try:
+                windows = shell.Windows()
+                for window in windows:
+                    window_info = self.get_window_info(window)
+                    if window_info:
+                        explorer_windows.append(window_info)
+            except Exception as e:
+                logger.error(f"Error getting Explorer windows: {e}")
+            return explorer_windows
+        finally:
+            pythoncom.CoUninitialize()
 
     def is_window_active(self, hwnd) -> bool:
         try:
@@ -117,18 +120,17 @@ class ExplorerMonitor:
             logger.debug(f"Error checking active window: {e}")
             return False
 
-# Initialize the monitor
 explorer_monitor = ExplorerMonitor()
+executor = ThreadPoolExecutor(max_workers=1)
 
 @app.get("/explorer-paths")
 async def get_current_paths():
-    """Endpoint to get all Explorer window paths"""
-    paths = explorer_monitor.get_explorer_paths()
+    loop = asyncio.get_running_loop()
+    paths = await loop.run_in_executor(executor, explorer_monitor.get_explorer_paths)
     active_window = next(
-        (window for window in paths if window["is_active"]), 
+        (window for window in paths if window["is_active"]),
         None
     )
-    
     logger.debug(f"Found {len(paths)} Explorer windows")
     return {
         "windows": paths,
