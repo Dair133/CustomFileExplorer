@@ -38,18 +38,14 @@ app.on('activate', () => {
 });
 
 async function fetchExplorerPaths() {
-  console.log('zzz')
   try {
     const response = await fetch('http://localhost:8000/explorer-paths');
     const data = await response.json();
-    console.log("Response fomr python is")
-    console.log(data)
     mainWindow.webContents.send('explorer-paths-update', data);
   } catch (error) {
     console.error('Error fetching explorer paths:', error);
     mainWindow.webContents.send('explorer-paths-error', error.message);
   }
-  console.log('end of fetching')
 }
 
 ipcMain.on('start-explorer-monitoring', () => {
