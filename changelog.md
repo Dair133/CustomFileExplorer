@@ -9,3 +9,8 @@ User should then be given before and after of script running
 
 2/2
 early function change which returns list of all files in a folder
+
+
+
+3/2
+refactored project to use react for the front end

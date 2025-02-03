@@ -1,12 +1,13 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
-
+import ExplorerWindow from './components/FilePathWindow';  // Import the ExplorerWindow component
 // Access Electron's ipcRenderer. (Using window.require because nodeIntegration is enabled.)
 const { ipcRenderer } = window.require('electron');
 
 const App = () => {
   const [explorerData, setExplorerData] = useState(null);
   const [error, setError] = useState(null);
+  const [activeWindowIndex, setActiveWindowIndex] = useState(null);
 
   useEffect(() => {
     // Tell the main process to start monitoring
@@ -36,7 +37,9 @@ const App = () => {
       console.log("Error Connecting")
       return <div className="error-message">Error connecting to file monitor: {error}</div>;
   }
-
+  const handleWindowClick = (index) => {
+    setActiveWindowIndex(index);
+  };
   if (!explorerData) {
     return <div>Loading...</div>;
   }
@@ -48,24 +51,16 @@ const App = () => {
   return (
     <div>
       {explorerData.windows.map((windowData, index) => (
-        <ExplorerWindow key={index} windowData={windowData} />
+        <ExplorerWindow
+          key={index}
+          windowData={windowData}
+          isActive={index === activeWindowIndex}
+          onClick={() => handleWindowClick(index)}
+        />
       ))}
     </div>
   );
 };
 
-const ExplorerWindow = ({ windowData }) => {
-  return (
-    <div className={`explorer-window ${windowData.is_active ? 'active' : ''}`}>
-      <div className="window-header">
-        <span className="window-icon">F</span>
-        <span className="window-title">{windowData.title}</span>
-        {windowData.is_active && <span className="active-badge">Active</span>}
-      </div>
-      <div className="window-path">{windowData.path}</div>
-      {/* If you want to display files in the window, you can add another component or mapping here */}
-    </div>
-  );
-};
 
 export default App;

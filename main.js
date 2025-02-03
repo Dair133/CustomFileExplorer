@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fetch = require('node-fetch');
 
+
 let mainWindow;
 
 function createWindow() {
