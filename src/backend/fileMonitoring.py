@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import FastAPI
+from fastapi import FastAPI, logger
 from fastapi.middleware.cors import CORSMiddleware
 import win32com.client
 import win32gui
@@ -12,17 +12,7 @@ import pythoncom
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-class ExplorerMonitor:
+class FileMonitoringClass:
     def __init__(self):
         pass
 
@@ -119,25 +109,3 @@ class ExplorerMonitor:
         except Exception as e:
             logger.debug(f"Error checking active window: {e}")
             return False
-
-explorer_monitor = ExplorerMonitor()
-executor = ThreadPoolExecutor(max_workers=1)
-
-@app.get("/explorer-paths")
-async def get_current_paths():
-    loop = asyncio.get_running_loop()
-    paths = await loop.run_in_executor(executor, explorer_monitor.get_explorer_paths)
-    active_window = next(
-        (window for window in paths if window["is_active"]),
-        None
-    )
-    logger.debug(f"Found {len(paths)} Explorer windows")
-    return {
-        "windows": paths,
-        "active_window": active_window
-    }
-
-if __name__ == "__main__":
-    import uvicorn
-    logger.info("Starting Explorer Monitor server...")
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
