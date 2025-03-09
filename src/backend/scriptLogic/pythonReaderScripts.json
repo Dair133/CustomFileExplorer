@@ -1,0 +1,12 @@
+{
+    "scripts":
+        [
+            {
+                "name":"Count Words",
+                "description":"NA",
+                "fileName":"wordCounter.py",
+                "type":"python"
+            }
+        ]
+    
+}

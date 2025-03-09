@@ -8,15 +8,23 @@ const App = () => {
   const [explorerData, setExplorerData] = useState(null);
   const [error, setError] = useState(null);
   const [activeWindowIndex, setActiveWindowIndex] = useState(null);
-
+  const [scriptData, setScriptData] = useState(null)
   useEffect(() => {
     // Tell the main process to start monitoring
     ipcRenderer.send('start-explorer-monitoring');
 
+    // For testing we will just get python scripts upon loading
+    ipcRenderer.send('get-python-scripts')
     // Define listeners for IPC events
     const onUpdate = (event, data) => {
       console.log(data)
       setExplorerData(data);
+    };
+
+
+    const onUpdateScriptData = (event, data) => {
+      console.log(data)
+      setScriptData(data);
     };
 
     const onError = (event, errorMsg) => {
@@ -25,6 +33,9 @@ const App = () => {
     // When we receive explorer data from the main.js call the onUpdate and then setExplorerData
     ipcRenderer.on('explorer-paths-update', onUpdate);
     ipcRenderer.on('explorer-paths-error', onError);
+
+    ipcRenderer.on('script-data-update', onUpdateScriptData)
+
 
     // Cleanup listeners when the component unmounts
     return () => {
@@ -50,6 +61,7 @@ const App = () => {
 
   return (
     <div>
+      <div>
       {explorerData.windows.map((windowData, index) => (
         <ExplorerWindow
           key={index}
@@ -58,6 +70,13 @@ const App = () => {
           onClick={() => handleWindowClick(index)}
         />
       ))}
+      </div>
+      <div>
+      {scriptData.scripts.map((script, index) => (
+          <div key={index}>{script.name}</div>  
+      )
+      )}
+      </div>
     </div>
   );
 };

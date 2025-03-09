@@ -48,8 +48,29 @@ async function fetchExplorerPaths() {
   }
 }
 
+async function fetchScripts(scriptType) {
+try{
+  const response = await fetch('http://localhost:8000/get-script-list?type='+scriptType);
+  const data = await response.json()
+  console.log('Sending script data')
+  console.log(data)
+  mainWindow.webContents.send('script-data-update', data);
+}
+catch(e){
+  console.log("Error in fetching scripts")
+  // Need to do error handling here
+}
+}
+
 ipcMain.on('start-explorer-monitoring', () => {
   console.log('Sarting monitoring')
   const interval = setInterval(fetchExplorerPaths, 1000);
   mainWindow.on('closed', () => clearInterval(interval));
 });
+
+
+
+ipcMain.on('get-python-scripts', () =>{
+  console.log('Attempting to get list of python scripts')
+  pythonScriptJSON = fetchScripts('python')
+})
